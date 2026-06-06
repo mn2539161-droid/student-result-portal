@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Result Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #f8fafc;
+        }
+        .container {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h2 {
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 16px;
+            color: #fff;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        input:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #38bdf8 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+        button:active { transform: translateY(0); }
+        
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid #38bdf8;
+            border-radius: 50%;
+            margin: 20px auto 0;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Result Display Marksheet */
+        .result-box {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            background: rgba(15, 23, 42, 0.8);
+            display: none;
+            text-align: left;
+            border-left: 5px solid #38bdf8;
+        }
+        .result-box h3 {
+            margin: 0 0 15px 0;
+            color: #38bdf8;
+            font-size: 20px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+        .info-p { margin: 6px 0; font-size: 15px; color: #cbd5e1; }
+        .info-p strong { color: #fff; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+            font-size: 14px;
+        }
+        th { color: #94a3b8; font-weight: 600; }
+        td.subject-name { color: #e2e8f0; }
+        td.score { font-weight: 700; color: #34d399; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container animate__animated animate__fadeInUp">
+    <h2>Academic Result Portal</h2>
+    <p class="subtitle">Enter your roll number to fetch your official marksheet</p>
+    
+    <div class="input-group">
+        <input type="text" id="searchRoll" placeholder="Type Roll Number Here...">
+    </div>
+    <button id="searchBtn">Search Result</button>
+
+    <div id="loadingSpinner" class="spinner"></div>
+    <div id="resultDisplay" class="result-box animate__animated"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC72Zk7T4h9ZJJPR9WzlOAnd3G-5VpmhiI",
+    authDomain: "student-result-system-74c7d.firebaseapp.com",
+    projectId: "student-result-system-74c7d",
+    storageBucket: "student-result-system-74c7d.firebasestorage.app",
+    messagingSenderId: "669365756034",
+    appId: "1:669365756034:web:95b93ce15b72039921d49b",
+    measurementId: "G-QV7VZXV3YX"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const searchBtn = document.getElementById('searchBtn');
+  const resultDiv = document.getElementById('resultDisplay');
+  const spinner = document.getElementById('loadingSpinner');
+
+  searchBtn.addEventListener('click', async () => {
+      const searchRoll = document.getElementById('searchRoll').value.trim();
+      
+      if(!searchRoll) {
+        alert("Please enter a valid roll number!");
+        return;
+      }
+
+      // Show loader & hide previous result
+      resultDiv.style.display = "none";
+      resultDiv.classList.remove('animate__fadeIn');
+      spinner.style.display = "block";
+
+      try {
+        const q = query(collection(db, "students"), where("roll", "==", searchRoll));
+        const querySnapshot = await getDocs(q);
+
+        spinner.style.display = "none"; // Hide Loader
+        resultDiv.style.display = "block";
+        resultDiv.classList.add('animate__fadeIn');
+
+        if (querySnapshot.empty) {
+          resultDiv.innerHTML = "<p style='color:#f87171; font-weight:600; text-align:center; margin:0;'>❌ No record found for this roll number!</p>";
+        } else {
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const sub = data.subjects || { math: 0, chemistry: 0, islam: 0, nutritionist: 0 };
+            
+            resultDiv.innerHTML = `
+              <h3>Official Marksheet</h3>
+              <p class="info-p"><strong>Student Name:</strong> ${data.name}</p>
+              <p class="info-p"><strong>Roll Number:</strong> ${data.roll}</p>
+              
+              <table>
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th style="text-align:center;">Marks Obtained</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="subject-name">Mathematics</td>
+                    <td class="score">${sub.math}</td>
+                  </tr>
+                  <tr>
+                    <td class="subject-name">Chemistry</td>
+                    <td class="score">${sub.chemistry}</td>
+                  </tr>
+                  <tr>
+                    <td class="subject-name">Islam Education</td>
+                    <td class="score">${sub.islam}</td>
+                  </tr>
+                  <tr>
+                    <td class="subject-name">Nutritionist</td>
+                    <td class="score">${sub.nutritionist}</td>
+                  </tr>
+                </tbody>
+              </table>
+            `;
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+        spinner.style.display = "none";
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = "<p style='color:#f87171; text-align:center; margin:0;'>Server connection error. Try again.</p>";
+      }
+  });
+</script>
+</body>
+</html>
+
